@@ -12,7 +12,7 @@ import ContentModalInput from "../../components/modal/ContentModalInput";
 import { showMessage } from "react-native-flash-message";
 
 const Rooms = ({navigation}) =>{
-    const [contentList, setContentList] = useState(null)
+    const [contentList, setContentList] = useState([])
     const [visible, setIsVisible] = useState(false)
     const [loading,setLoading]= useState(true)
 
@@ -39,11 +39,22 @@ const Rooms = ({navigation}) =>{
 
     async function sendContent(content){
         const user = auth().currentUser.email;
+        const roomCheck = contentList.findIndex((room) => room.text.toLowerCase() == content.toLowerCase())
+        if(roomCheck > 0){
+            showMessage({
+                type : "danger",
+                message : "Bu oda zaten var...",
+                titleStyle : {
+                    fontSize : 20,
+                }
+            })
+            return
+        }
         try{
             const contentObject = {
                 userName : user.split("@")[0],
                 text : content,
-                date : new Date().toISOString(),
+                date : new Date().toString(),
             }
             await database().ref('/rooms/').push(contentObject)
         }catch(error){
@@ -58,7 +69,9 @@ const Rooms = ({navigation}) =>{
     }
 
     const renderItem = ({item}) => <RoomsCard room={item.text} handleMessages={() => navigation.navigate("Messages", item)}/>
-   
+    if(loading){
+        return <Loading/>
+    }
     return(
         <View style={styles.container}>
            {
